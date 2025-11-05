@@ -1,6 +1,7 @@
 export interface User {
     id: string;
     email: string;
+    passwordHash: string;
     // Tracks progress to implement business logic
     watchedGoTEpisodes: number;
     unlockedHoD: boolean;

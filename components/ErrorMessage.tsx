@@ -42,10 +42,12 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ series, user }) => {
         return { isLocked, watchPrice, downloadPrice };
     };
 
-    const episodesBySeason = series.episodes.reduce((acc, episode) => {
+    // Fix: Correctly typed the initial value for `reduce`. Without this, TypeScript
+    // inferred `episodes` as `unknown` in the `.map` call below, causing an error.
+    const episodesBySeason = series.episodes.reduce<Record<string, Episode[]>>((acc, episode) => {
         (acc[episode.season] = acc[episode.season] || []).push(episode);
         return acc;
-    }, {} as Record<number, Episode[]>);
+    }, {});
 
     const hasMultipleSeasons = Object.keys(episodesBySeason).length > 1;
 
