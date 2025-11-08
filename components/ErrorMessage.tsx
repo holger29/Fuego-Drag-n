@@ -4,25 +4,28 @@ import type { Series, User, Episode } from '../types';
 interface EpisodeListProps {
     series: Series;
     user: User;
+    onPurchaseEpisode: (episode: Episode, price: number) => void;
+    onPurchaseDownload: (episode: Episode, price: number) => void;
+    onPlayEpisode: (episode: Episode) => void;
 }
 
-const EpisodeList: React.FC<EpisodeListProps> = ({ series, user }) => {
+const EpisodeList: React.FC<EpisodeListProps> = ({ series, user, onPurchaseEpisode, onPurchaseDownload, onPlayEpisode }) => {
     const [openSeason, setOpenSeason] = useState<number | null>(1);
 
     const handleToggleSeason = (seasonNumber: number) => {
         setOpenSeason(prevOpenSeason => (prevOpenSeason === seasonNumber ? null : seasonNumber));
     };
 
-    const handleEpisodeClick = (episodeId: number, isLocked: boolean, price: number) => {
+    const handleEpisodeClick = (episode: Episode, isLocked: boolean, price: number) => {
         if (isLocked) {
-            alert(`Debes pagar $${price.toFixed(2)} para ver este episodio.`);
+            onPurchaseEpisode(episode, price);
         } else {
-            alert(`Reproduciendo episodio ${episodeId}... (Simulación)`);
+            onPlayEpisode(episode);
         }
     };
 
-    const handleDownloadClick = (price: number) => {
-        alert(`Debes pagar $${price.toFixed(2)} para descargar este episodio. (Simulación)`);
+    const handleDownloadClick = (episode: Episode, price: number) => {
+        onPurchaseDownload(episode, price);
     };
 
     const getPricing = (seriesId: string, episodeId: number) => {
@@ -39,15 +42,27 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ series, user }) => {
             watchPrice = 0.20;
             downloadPrice = 0.60;
         }
+
+        // Unlock if already purchased
+        if (user.purchasedEpisodes?.includes(episodeId)) {
+            isLocked = false;
+        }
+
         return { isLocked, watchPrice, downloadPrice };
     };
 
-    // Fix: Correctly typed the initial value for `reduce`. Without this, TypeScript
-    // inferred `episodes` as `unknown` in the `.map` call below, causing an error.
-    const episodesBySeason = series.episodes.reduce<Record<string, Episode[]>>((acc, episode) => {
-        (acc[episode.season] = acc[episode.season] || []).push(episode);
+    // FIX: Group episodes by season. By explicitly typing the accumulator with a generic
+    // on `reduce`, we ensure `episodesBySeason` has the correct type. This
+    // prevents TypeScript from inferring `episodes` as `unknown` in the `.map` call below.
+    // @google-genai-fix: Correctly type the `reduce` accumulator by applying a type assertion to the initial value. This fixes the "Untyped function call" error.
+    const episodesBySeason = series.episodes.reduce((acc, episode) => {
+        const seasonKey = String(episode.season);
+        if (!acc[seasonKey]) {
+            acc[seasonKey] = [];
+        }
+        acc[seasonKey].push(episode);
         return acc;
-    }, {});
+    }, {} as Record<string, Episode[]>);
 
     const hasMultipleSeasons = Object.keys(episodesBySeason).length > 1;
 
@@ -64,16 +79,17 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ series, user }) => {
                                     <h4 className="font-bold text-lg">{ep.title}</h4>
                                     <p className="text-sm text-gray-400">Temporada {ep.season}</p>
                                 </div>
+                                {/* @google-genai-fix: Correct Tailwind CSS class from sm-gap-3 to sm:gap-3 */}
                                 <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                                     {isLocked ? (
                                         <span className="text-xs font-bold bg-yellow-500 text-black py-1 px-2 rounded">${watchPrice.toFixed(2)}</span>
                                     ) : (
                                         <span className="text-xs font-bold bg-green-500 text-black py-1 px-2 rounded">GRATIS</span>
                                     )}
-                                    <button onClick={() => handleEpisodeClick(ep.id, isLocked, watchPrice)} className={`w-10 h-10 flex items-center justify-center rounded text-white font-semibold ${isLocked ? 'bg-gray-600' : 'bg-red-600 hover:bg-red-700'}`} title={isLocked ? "Ver (Bloqueado)" : "Ver"}>
+                                    <button onClick={() => handleEpisodeClick(ep, isLocked, watchPrice)} className={`w-10 h-10 flex items-center justify-center rounded text-white font-semibold ${isLocked ? 'bg-gray-600' : 'bg-red-600 hover:bg-red-700'}`} title={isLocked ? "Ver (Bloqueado)" : "Ver"}>
                                         {isLocked ? <i className="fa-solid fa-lock"></i> : <i className="fa-solid fa-play"></i>}
                                     </button>
-                                    <button onClick={() => handleDownloadClick(downloadPrice)} title={`Descargar ($${downloadPrice.toFixed(2)})`} className="w-10 h-10 flex items-center justify-center rounded text-white font-semibold bg-blue-600 hover:bg-blue-700">
+                                    <button onClick={() => handleDownloadClick(ep, downloadPrice)} title={`Descargar ($${downloadPrice.toFixed(2)})`} className="w-10 h-10 flex items-center justify-center rounded text-white font-semibold bg-blue-600 hover:bg-blue-700">
                                         <i className="fa-solid fa-download"></i>
                                     </button>
                                 </div>
@@ -112,16 +128,17 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ series, user }) => {
                                                     <h4 className="font-bold text-lg">E{ep.episode}: {ep.title}</h4>
                                                     <p className="text-sm text-gray-400">{ep.description}</p>
                                                 </div>
+                                                {/* @google-genai-fix: Correct Tailwind CSS class from sm-gap-3 to sm:gap-3 */}
                                                 <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                                                     {isLocked ? (
                                                         <span className="text-xs font-bold bg-yellow-500 text-black py-1 px-2 rounded">${watchPrice.toFixed(2)}</span>
                                                     ) : (
                                                         <span className="text-xs font-bold bg-green-500 text-black py-1 px-2 rounded">GRATIS</span>
                                                     )}
-                                                    <button onClick={() => handleEpisodeClick(ep.id, isLocked, watchPrice)} className={`w-10 h-10 flex items-center justify-center rounded text-white font-semibold ${isLocked ? 'bg-gray-600' : 'bg-red-600 hover:bg-red-700'}`} title={isLocked ? "Ver (Bloqueado)" : "Ver"}>
+                                                    <button onClick={() => handleEpisodeClick(ep, isLocked, watchPrice)} className={`w-10 h-10 flex items-center justify-center rounded text-white font-semibold ${isLocked ? 'bg-gray-600' : 'bg-red-600 hover:bg-red-700'}`} title={isLocked ? "Ver (Bloqueado)" : "Ver"}>
                                                         {isLocked ? <i className="fa-solid fa-lock"></i> : <i className="fa-solid fa-play"></i>}
                                                     </button>
-                                                    <button onClick={() => handleDownloadClick(downloadPrice)} title={`Descargar ($${downloadPrice.toFixed(2)})`} className="w-10 h-10 flex items-center justify-center rounded text-white font-semibold bg-blue-600 hover:bg-blue-700">
+                                                    <button onClick={() => handleDownloadClick(ep, downloadPrice)} title={`Descargar ($${downloadPrice.toFixed(2)})`} className="w-10 h-10 flex items-center justify-center rounded text-white font-semibold bg-blue-600 hover:bg-blue-700">
                                                         <i className="fa-solid fa-download"></i>
                                                     </button>
                                                 </div>

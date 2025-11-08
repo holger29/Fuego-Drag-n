@@ -12,7 +12,9 @@ const HomePage: React.FC<HomePageProps> = ({ series, user, onSelectSeries, onUnl
     const got = series.find(s => s.id === 'got');
     const hod = series.find(s => s.id === 'hod');
 
-    const isHodLocked = user.watchedGoTEpisodes < 73 && !user.unlockedHoD;
+    // Business logic: HOD is locked until all 73 episodes of GoT are watched.
+    const gotEpisodesWatched = user.watchedEpisodes.filter(id => id <= 73).length;
+    const isHodLocked = gotEpisodesWatched < 73 && !user.unlockedHoD;
 
     return (
         <div className="container mx-auto p-4 md:p-8 pt-24 md:pt-28 min-h-screen">
@@ -44,7 +46,7 @@ const HomePage: React.FC<HomePageProps> = ({ series, user, onSelectSeries, onUnl
                                 <div className="text-white">
                                     <i className="fa-solid fa-lock text-4xl mb-4"></i>
                                     <h3 className="text-2xl font-bold font-cinzel">Bloqueado</h3>
-                                    <p className="mt-2 mb-4">Debes completar 'Juego de Tronos' o pagar para desbloquear.</p>
+                                    <p className="mt-2 mb-4">Debes ver los {73 - gotEpisodesWatched} episodios restantes de 'Juego de Tronos' o pagar para desbloquear.</p>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();

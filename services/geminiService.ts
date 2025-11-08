@@ -1,5 +1,10 @@
-// This service provides mock data for the series.
-import type { Series } from '../types';
+import { GoogleGenAI, Type } from "@google/genai";
+import type { Series, Episode } from '../types';
+
+// This service provides mock data for the series, now enhanced with Gemini.
+
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
 
 const generateGoTEpisodes = () => {
     const episodes = [];
@@ -15,7 +20,8 @@ const generateGoTEpisodes = () => {
                 title: `Capítulo ${episodeInSeason}`,
                 season: seasonNumber,
                 episode: episodeInSeason,
-                description: `Resumen del S${seasonNumber}E${episodeInSeason}...`
+                description: `Resumen del S${seasonNumber}E${episodeInSeason}...`,
+                videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' // Placeholder
             });
             episodeCounter++;
         }
@@ -24,14 +30,16 @@ const generateGoTEpisodes = () => {
 };
 
 const gameOfThronesEpisodes = generateGoTEpisodes();
+const totalGoTEpisodes = gameOfThronesEpisodes.length;
 
 const totalHoDEpisodes = 10;
 const houseOfTheDragonEpisodes = Array.from({ length: totalHoDEpisodes }, (_, i) => ({
-    id: i + 1,
+    id: i + 1 + totalGoTEpisodes, // Ensure HoD episode IDs are unique and follow GoT's
     title: `Capítulo ${i + 1}`,
     season: 1,
     episode: i + 1,
-    description: `Resumen del S1E${i + 1}...`
+    description: `Resumen del S1E${i + 1}...`,
+    videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4' // Placeholder
 }));
 
 const seriesData: Series[] = [
@@ -51,10 +59,79 @@ const seriesData: Series[] = [
     }
 ];
 
-export const getSeries = (): Promise<Series[]> => {
+// Helper to prevent API calls on every load by caching
+const seriesCache = new Map<string, Series>();
+
+export const getSeries = async (): Promise<Series[]> => {
+    // This function can remain simple and fast, returning the basic structure.
+    // The detailed fetching can happen in getSeriesById.
     return Promise.resolve(seriesData);
 };
 
-export const getSeriesById = (id: string): Promise<Series | undefined> => {
-    return Promise.resolve(seriesData.find(s => s.id === id));
+export const getSeriesById = async (id: string): Promise<Series | undefined> => {
+    const seriesStructure = seriesData.find(s => s.id === id);
+    if (!seriesStructure) return undefined;
+    
+    // Check cache first to avoid redundant API calls
+    if (seriesCache.has(id)) {
+        return seriesCache.get(id);
+    }
+
+    try {
+        const descriptionPrompt = `Generate a compelling, one-sentence description in Spanish for the TV series '${seriesStructure.title}'. It should be exciting and hook the reader.`;
+        const episodePrompt = `Generate brief, one-sentence summaries in Spanish for each episode of the TV series "${seriesStructure.title}".
+        Provide the response as a valid JSON array of objects, where each object has "id" (number) and "description" (string).
+        The episode IDs for this series are from ${seriesStructure.episodes[0].id} to ${seriesStructure.episodes[seriesStructure.episodes.length - 1].id}.`;
+
+        const [descriptionResponse, episodesResponse] = await Promise.all([
+            ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: descriptionPrompt,
+            }),
+            ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: episodePrompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                id: { type: Type.NUMBER },
+                                description: { type: Type.STRING }
+                            },
+                            required: ["id", "description"]
+                        }
+                    }
+                }
+            })
+        ]);
+
+        let generatedSummaries: {id: number, description: string}[] = [];
+        try {
+           generatedSummaries = JSON.parse(episodesResponse.text);
+        } catch(e) {
+            console.error("Failed to parse JSON from Gemini response:", episodesResponse.text);
+            throw e; 
+        }
+
+        const updatedEpisodes = seriesStructure.episodes.map(ep => {
+            const summary = generatedSummaries.find(s => s.id === ep.id);
+            return summary ? { ...ep, description: summary.description } : ep;
+        });
+
+        const updatedSeries = { 
+            ...seriesStructure, 
+            description: descriptionResponse.text || seriesStructure.description,
+            episodes: updatedEpisodes 
+        };
+        
+        seriesCache.set(id, updatedSeries); // Cache the result
+        return updatedSeries;
+
+    } catch (error) {
+        console.error(`Error fetching details for ${seriesStructure.title} from Gemini:`, error);
+        return seriesStructure; // Fallback to mock data on error
+    }
 };

@@ -19,10 +19,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
                 <button onClick={onLoginClick} className="bg-red-600 text-white font-bold py-3 px-8 rounded hover:bg-red-700 transition duration-300 transform hover:scale-105 text-lg">
-                    Iniciar Sesión
-                </button>
-                <button onClick={onLoginClick} className="bg-gray-700 text-white font-bold py-3 px-8 rounded hover:bg-gray-600 transition duration-300 text-lg">
-                    Registrarse
+                    Ingresar
                 </button>
             </div>
         </div>

@@ -3,8 +3,9 @@ export interface User {
     email: string;
     passwordHash: string;
     // Tracks progress to implement business logic
-    watchedGoTEpisodes: number;
+    watchedEpisodes: number[];
     unlockedHoD: boolean;
+    purchasedEpisodes?: number[];
 }
 
 export interface Episode {
@@ -13,6 +14,7 @@ export interface Episode {
     season: number;
     episode: number;
     description: string;
+    videoUrl: string;
 }
 
 export interface Series {

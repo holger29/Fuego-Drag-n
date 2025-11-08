@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Series, User } from '../types';
+import type { Series, User, Episode } from '../types';
 import { getSeriesById } from '../services/geminiService';
 import EpisodeList from './ErrorMessage';
 
@@ -7,9 +7,12 @@ interface SeriesPageProps {
     seriesId: string;
     user: User;
     onBack: () => void;
+    onPurchaseEpisode: (episode: Episode, price: number) => void;
+    onPurchaseDownload: (episode: Episode, price: number) => void;
+    onPlayEpisode: (episode: Episode) => void;
 }
 
-const SeriesPage: React.FC<SeriesPageProps> = ({ seriesId, user, onBack }) => {
+const SeriesPage: React.FC<SeriesPageProps> = ({ seriesId, user, onBack, onPurchaseEpisode, onPurchaseDownload, onPlayEpisode }) => {
     const [series, setSeries] = useState<Series | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -48,7 +51,13 @@ const SeriesPage: React.FC<SeriesPageProps> = ({ seriesId, user, onBack }) => {
                     <div className="md:w-2/3">
                         <h2 className="text-5xl font-bold mb-4 font-cinzel">{series.title}</h2>
                         <p className="text-gray-300 mb-8">{series.description}</p>
-                        <EpisodeList series={series} user={user} />
+                        <EpisodeList 
+                            series={series} 
+                            user={user} 
+                            onPurchaseEpisode={onPurchaseEpisode}
+                            onPurchaseDownload={onPurchaseDownload}
+                            onPlayEpisode={onPlayEpisode}
+                        />
                     </div>
                 </div>
             </div>
