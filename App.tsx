@@ -9,6 +9,7 @@ import SeriesPage from './components/LoadingSpinner';
 import PaymentModal from './components/PaymentModal';
 import PlayerPage from './components/PlayerPage';
 import ProfilePage from './components/ProfilePage';
+import BetaWarningModal from './components/BetaWarningModal';
 
 type View = 'landing' | 'login' | 'home' | 'series' | 'player' | 'profile';
 
@@ -23,6 +24,7 @@ const App: React.FC = () => {
         itemName: string;
         onSuccess: () => void;
     } | null>(null);
+    const [showBetaWarning, setShowBetaWarning] = useState(false);
     
     // Helper function to hash passwords using the browser's built-in crypto API
     const hashPassword = async (password: string): Promise<string> => {
@@ -35,6 +37,11 @@ const App: React.FC = () => {
     };
 
     useEffect(() => {
+        // Beta warning logic
+        if (!sessionStorage.getItem('betaWarningDismissed')) {
+            setShowBetaWarning(true);
+        }
+
         const loggedInUserEmail = localStorage.getItem('dragon_fire_session');
         if (loggedInUserEmail) {
             const usersStr = localStorage.getItem('dragon_fire_users');
@@ -237,6 +244,12 @@ const App: React.FC = () => {
         }
     };
 
+    const handleDismissBetaWarning = () => {
+        sessionStorage.setItem('betaWarningDismissed', 'true');
+        setShowBetaWarning(false);
+    };
+
+
     const renderContent = () => {
         switch (view) {
             case 'landing':
@@ -292,6 +305,7 @@ const App: React.FC = () => {
             <main>
                 {renderContent()}
             </main>
+            {showBetaWarning && <BetaWarningModal onDismiss={handleDismissBetaWarning} />}
             {paymentDetails && (
                 <PaymentModal
                     amount={paymentDetails.amount}
