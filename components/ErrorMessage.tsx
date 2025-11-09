@@ -55,7 +55,8 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ series, user, onPurchaseEpiso
     // on `reduce`, we ensure `episodesBySeason` has the correct type. This
     // prevents TypeScript from inferring `episodes` as `unknown` in the `.map` call below.
     // @google-genai-fix: Correctly type the `reduce` accumulator by applying a type assertion to the initial value. This fixes the "Untyped function call" error.
-    const episodesBySeason = series.episodes.reduce((acc, episode) => {
+    // FIX: Explicitly type the accumulator in the callback to ensure correct type inference for `episodesBySeason`, preventing the 'map' does not exist on 'unknown' error.
+    const episodesBySeason = series.episodes.reduce((acc: Record<string, Episode[]>, episode) => {
         const seasonKey = String(episode.season);
         if (!acc[seasonKey]) {
             acc[seasonKey] = [];

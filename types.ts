@@ -2,6 +2,10 @@ export interface User {
     id: string;
     email: string;
     passwordHash: string;
+    name: string;
+    country: string;
+    city: string;
+    phoneNumber: string;
     // Tracks progress to implement business logic
     watchedEpisodes: number[];
     unlockedHoD: boolean;

@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 
 interface LoginPageProps {
     onLogin: (email: string, password: string) => Promise<void>;
-    onRegister: (email: string, password: string) => Promise<{ success: boolean, message: string }>;
+    onRegister: (email: string, password: string, name: string, country: string, city: string, phoneNumber: string) => Promise<{ success: boolean, message: string }>;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+    const [country, setCountry] = useState('');
+    const [city, setCity] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [mode, setMode] = useState<'login' | 'register'>('login');
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -38,6 +42,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister }) => {
             return false;
         }
 
+        if (!name || !country || !city || !phoneNumber) {
+            setError('Por favor, completa todos los campos.');
+            return false;
+        }
+        if (!/^\d+$/.test(phoneNumber)) {
+            setError('El número de celular solo debe contener dígitos.');
+            return false;
+        }
+
+
         return true;
     };
 
@@ -46,7 +60,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister }) => {
         setError(null);
         setSuccessMessage(null);
 
-        if (!email || !password) {
+        if (mode === 'login' && (!email || !password)) {
             setError("Por favor, introduce tu email y contraseña.");
             return;
         }
@@ -55,12 +69,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister }) => {
 
         if (mode === 'register') {
             if (validateRegistration()) {
-                const result = await onRegister(email, password);
+                const result = await onRegister(email, password, name, country, city, phoneNumber);
                 if (result.success) {
                     setSuccessMessage(result.message);
                     setMode('login');
                     setEmail('');
                     setPassword('');
+                    setName('');
+                    setCountry('');
+                    setCity('');
+                    setPhoneNumber('');
                 } else {
                     setError(result.message);
                 }
@@ -82,6 +100,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister }) => {
         setSuccessMessage(null);
         setEmail('');
         setPassword('');
+        setName('');
+        setCountry('');
+        setCity('');
+        setPhoneNumber('');
     };
 
     return (
@@ -90,7 +112,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister }) => {
                 <h2 className="text-3xl font-bold text-white text-center mb-6 font-cinzel">
                     {mode === 'login' ? 'Acceder' : 'Registrarse'}
                 </h2>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     {error && <p className="text-red-400 bg-red-900/50 p-3 rounded-md text-sm text-center">{error}</p>}
                     {successMessage && <p className="text-green-400 bg-green-900/50 p-3 rounded-md text-sm text-center">{successMessage}</p>}
                     <div>
@@ -117,11 +139,33 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister }) => {
                             autoComplete="current-password"
                         />
                     </div>
+                    {mode === 'register' && (
+                        <>
+                            <div>
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-300">Nombre Completo</label>
+                                <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: Jon Nieve" />
+                            </div>
+                            <div className="flex gap-4">
+                                <div className="flex-1">
+                                    <label htmlFor="country" className="block text-sm font-medium text-gray-300">País</label>
+                                    <input type="text" id="country" value={country} onChange={(e) => setCountry(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: Westeros" />
+                                </div>
+                                <div className="flex-1">
+                                    <label htmlFor="city" className="block text-sm font-medium text-gray-300">Ciudad</label>
+                                    <input type="text" id="city" value={city} onChange={(e) => setCity(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: Invernalia" />
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-300">Número Celular</label>
+                                <input type="tel" id="phoneNumber" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: 5551234567" />
+                            </div>
+                        </>
+                    )}
                     {mode === 'login' && <p className="text-xs text-gray-400 text-center">Si no tienes una cuenta, se creará una al registrarte.</p>}
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-gray-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        className="w-full mt-2 bg-red-600 text-white font-bold py-3 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-gray-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     >
                         {isLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : (mode === 'login' ? 'Entrar' : 'Registrarse')}
                     </button>

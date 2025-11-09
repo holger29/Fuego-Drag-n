@@ -8,8 +8,9 @@ import HomePage from './components/RecipeDisplay';
 import SeriesPage from './components/LoadingSpinner';
 import PaymentModal from './components/PaymentModal';
 import PlayerPage from './components/PlayerPage';
+import ProfilePage from './components/ProfilePage';
 
-type View = 'landing' | 'login' | 'home' | 'series' | 'player';
+type View = 'landing' | 'login' | 'home' | 'series' | 'player' | 'profile';
 
 const App: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -49,6 +50,11 @@ const App: React.FC = () => {
                 }
                  if (!currentUser.purchasedEpisodes) currentUser.purchasedEpisodes = [];
                  if (!currentUser.watchedEpisodes) currentUser.watchedEpisodes = [];
+                 if (!currentUser.name) currentUser.name = '';
+                 if (!currentUser.country) currentUser.country = '';
+                 if (!currentUser.city) currentUser.city = '';
+                 if (!currentUser.phoneNumber) currentUser.phoneNumber = '';
+
 
                 setUser(currentUser);
                 setView('home');
@@ -63,7 +69,7 @@ const App: React.FC = () => {
         fetchSeriesData();
     }, []);
 
-    const handleRegister = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
+    const handleRegister = async (email: string, password: string, name: string, country: string, city: string, phoneNumber: string): Promise<{ success: boolean; message: string }> => {
         const usersStr = localStorage.getItem('dragon_fire_users');
         const users = usersStr ? JSON.parse(usersStr) : {};
 
@@ -76,6 +82,10 @@ const App: React.FC = () => {
             id: Date.now().toString(),
             email: email,
             passwordHash: passwordHash,
+            name,
+            country,
+            city,
+            phoneNumber,
             watchedEpisodes: [],
             unlockedHoD: false,
             purchasedEpisodes: [],
@@ -111,6 +121,32 @@ const App: React.FC = () => {
         setView('landing');
         setPlayingEpisode(null);
         setSelectedSeriesId(null);
+    };
+    
+    const handleUpdateProfile = async (updatedDetails: Pick<User, 'name' | 'country' | 'city' | 'phoneNumber'>): Promise<{ success: boolean, message: string }> => {
+        if (!user) return { success: false, message: "No hay usuario activo." };
+
+        const updatedUser = { ...user, ...updatedDetails };
+        setUser(updatedUser);
+        updateUserInStorage(updatedUser);
+
+        return { success: true, message: "Perfil actualizado con éxito." };
+    };
+
+    const handleChangePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean, message: string }> => {
+        if (!user) return { success: false, message: "No hay usuario activo." };
+
+        const currentPasswordHash = await hashPassword(currentPassword);
+        if (currentPasswordHash !== user.passwordHash) {
+            return { success: false, message: "La contraseña actual es incorrecta." };
+        }
+        
+        const newPasswordHash = await hashPassword(newPassword);
+        const updatedUser = { ...user, passwordHash: newPasswordHash };
+        setUser(updatedUser);
+        updateUserInStorage(updatedUser);
+
+        return { success: true, message: "Contraseña actualizada con éxito." };
     };
     
     const handleSelectSeries = (seriesId: string) => {
@@ -234,6 +270,17 @@ const App: React.FC = () => {
                     />
                 }
                  return null;
+            case 'profile':
+                 if (user) {
+                    return <ProfilePage 
+                        user={user} 
+                        seriesList={seriesList}
+                        onBack={() => setView('home')}
+                        onChangePassword={handleChangePassword}
+                        onUpdateProfile={handleUpdateProfile}
+                        />
+                 }
+                 return null;
             default:
                 return <LandingPage onLoginClick={() => setView('login')} />;
         }
@@ -241,7 +288,7 @@ const App: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-900">
-            {user && view !== 'player' && <Header user={user} onLogout={handleLogout} />}
+            {user && !['player', 'landing', 'login'].includes(view) && <Header user={user} onLogout={handleLogout} onViewProfile={() => setView('profile')} />}
             <main>
                 {renderContent()}
             </main>
