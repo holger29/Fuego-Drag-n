@@ -3,7 +3,10 @@ import type { Series, Episode } from '../types';
 
 // This service provides mock data for the series, now enhanced with Gemini.
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// WARNING: Do not expose your API key in client-side code in a real production application.
+// This is done here for demonstration purposes. Use environment variables on a server instead.
+const apiKey = "AIzaSyC-OzK6ghSc_ZMO1rIA21XE0Ox8ql4z7xk";
+const ai = new GoogleGenAI({ apiKey: apiKey });
 
 
 const generateGoTEpisodes = () => {
