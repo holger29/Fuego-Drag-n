@@ -7,9 +7,10 @@ interface ProfilePageProps {
     onBack: () => void;
     onChangePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean, message: string }>;
     onUpdateProfile: (updatedDetails: Pick<User, 'name' | 'country' | 'city' | 'phoneNumber'>) => Promise<{ success: boolean, message: string }>;
+    onSaveFeedback: (comment: string) => Promise<{ success: boolean, message: string }>;
 }
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ user, seriesList, onBack, onChangePassword, onUpdateProfile }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ user, seriesList, onBack, onChangePassword, onUpdateProfile, onSaveFeedback }) => {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,6 +27,15 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, seriesList, onBack, onC
     const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
     const [isProfileLoading, setIsProfileLoading] = useState(false);
 
+    const [feedback, setFeedback] = useState('');
+    const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
+
+    const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+
+    const handleAccordionToggle = (accordionName: string) => {
+        setOpenAccordion(prev => (prev === accordionName ? null : accordionName));
+    };
 
     const episodeMap = useMemo(() => {
         const map = new Map<number, { seriesTitle: string, episode: Episode }>();
@@ -103,6 +113,25 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, seriesList, onBack, onC
         setIsProfileLoading(false);
     };
 
+    const handleFeedbackSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setFeedbackMessage(null);
+        if (!feedback.trim()) {
+            setFeedbackMessage({ type: 'error', text: "El comentario no puede estar vacío." });
+            return;
+        }
+
+        setIsFeedbackLoading(true);
+        const result = await onSaveFeedback(feedback);
+        if (result.success) {
+            setFeedbackMessage({ type: 'success', text: result.message });
+            setFeedback('');
+        } else {
+            setFeedbackMessage({ type: 'error', text: result.message });
+        }
+        setIsFeedbackLoading(false);
+    };
+
     const handleCancelEdit = () => {
         setName(user.name);
         setCountry(user.country);
@@ -171,7 +200,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, seriesList, onBack, onC
                 )}
             </div>
 
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                 {/* Watched History */}
                 <div className="bg-gray-800/50 p-6 rounded-lg shadow-xl border border-gray-700">
@@ -213,42 +241,97 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, seriesList, onBack, onC
                     </div>
                 </div>
             </div>
-            
-            {/* Change Password */}
-            <div className="mt-8 bg-gray-800/50 p-6 rounded-lg shadow-xl border border-gray-700">
-                <h3 className="text-2xl font-semibold mb-4 font-cinzel border-b border-gray-600 pb-2">Cambiar Contraseña</h3>
-                <form onSubmit={handlePasswordChangeSubmit} className="space-y-4 max-w-md mx-auto">
-                    {passwordError && <p className="text-red-400 bg-red-900/50 p-3 rounded-md text-sm text-center">{passwordError}</p>}
-                    {passwordSuccess && <p className="text-green-400 bg-green-900/50 p-3 rounded-md text-sm text-center">{passwordSuccess}</p>}
-                    <div>
-                        <label htmlFor="current-password"
-                               className="block text-sm font-medium text-gray-300">Contraseña Actual</label>
-                        <input type="password" id="current-password" value={currentPassword}
-                               onChange={e => setCurrentPassword(e.target.value)}
-                               className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
-                               required/>
-                    </div>
-                     <div>
-                        <label htmlFor="new-password"
-                               className="block text-sm font-medium text-gray-300">Nueva Contraseña</label>
-                        <input type="password" id="new-password" value={newPassword}
-                               onChange={e => setNewPassword(e.target.value)}
-                               className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
-                               required/>
-                    </div>
-                     <div>
-                        <label htmlFor="confirm-password"
-                               className="block text-sm font-medium text-gray-300">Confirmar Nueva Contraseña</label>
-                        <input type="password" id="confirm-password" value={confirmPassword}
-                               onChange={e => setConfirmPassword(e.target.value)}
-                               className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
-                               required/>
-                    </div>
-                    <button type="submit" disabled={isPasswordLoading}
-                            className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition duration-300 disabled:opacity-50 flex items-center justify-center">
-                        {isPasswordLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Actualizar Contraseña'}
+
+            {/* Accordion Sections */}
+            <div className="mt-8 space-y-4">
+                 {/* Feedback Accordion */}
+                <div className="bg-gray-800/50 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+                    <button
+                        onClick={() => handleAccordionToggle('feedback')}
+                        className="w-full text-left p-4 flex justify-between items-center bg-gray-800 hover:bg-gray-700/60 transition-colors"
+                        aria-expanded={openAccordion === 'feedback'}
+                        aria-controls="feedback-content"
+                    >
+                        <h3 className="text-2xl font-semibold font-cinzel">Tus Comentarios y Sugerencias</h3>
+                        <i className={`fa-solid fa-chevron-down transform transition-transform duration-300 ${openAccordion === 'feedback' ? 'rotate-180' : ''}`}></i>
                     </button>
-                </form>
+                    {openAccordion === 'feedback' && (
+                        <div id="feedback-content" className="p-6 border-t border-gray-700">
+                             <p className="text-gray-400 mb-4 text-sm">Tus experiencias, ideas para mejorar o cualquier otro comentario es muy importante para nosotros. ¡Ayúdanos a mejorar Fuego Dragón!</p>
+                            <form onSubmit={handleFeedbackSubmit} className="space-y-4">
+                                {feedbackMessage && (
+                                    <p className={`${feedbackMessage.type === 'success' ? 'text-green-400 bg-green-900/50' : 'text-red-400 bg-red-900/50'} p-3 rounded-md text-sm text-center`}>
+                                        {feedbackMessage.text}
+                                    </p>
+                                )}
+                                <div>
+                                    <textarea
+                                        value={feedback}
+                                        onChange={(e) => setFeedback(e.target.value)}
+                                        rows={5}
+                                        className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                                        placeholder="Escribe aquí tus comentarios sobre la página, los videos, qué te gustaría que mejoráramos, etc."
+                                    />
+                                </div>
+                                <div className="text-right">
+                                    <button type="submit" disabled={isFeedbackLoading} className="bg-red-600 text-white font-bold py-2 px-6 rounded-md hover:bg-red-700 transition duration-300 disabled:opacity-50 flex items-center justify-center min-w-[150px] ml-auto">
+                                        {isFeedbackLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Enviar Comentario'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+                </div>
+                {/* Change Password Accordion */}
+                <div className="bg-gray-800/50 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+                    <button
+                        onClick={() => handleAccordionToggle('password')}
+                        className="w-full text-left p-4 flex justify-between items-center bg-gray-800 hover:bg-gray-700/60 transition-colors"
+                        aria-expanded={openAccordion === 'password'}
+                        aria-controls="password-content"
+                    >
+                        <h3 className="text-2xl font-semibold font-cinzel">Cambiar Contraseña</h3>
+                        <i className={`fa-solid fa-chevron-down transform transition-transform duration-300 ${openAccordion === 'password' ? 'rotate-180' : ''}`}></i>
+                    </button>
+                    {openAccordion === 'password' && (
+                        <div id="password-content" className="p-6 border-t border-gray-700">
+                            <form onSubmit={handlePasswordChangeSubmit} className="space-y-4 max-w-md mx-auto">
+                                {passwordError && <p className="text-red-400 bg-red-900/50 p-3 rounded-md text-sm text-center">{passwordError}</p>}
+                                {passwordSuccess && <p className="text-green-400 bg-green-900/50 p-3 rounded-md text-sm text-center">{passwordSuccess}</p>}
+                                <div>
+                                    <label htmlFor="current-password"
+                                           className="block text-sm font-medium text-gray-300">Contraseña Actual</label>
+                                    <input type="password" id="current-password" value={currentPassword}
+                                           onChange={e => setCurrentPassword(e.target.value)}
+                                           className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                                           required/>
+                                </div>
+                                 <div>
+                                    <label htmlFor="new-password"
+                                           className="block text-sm font-medium text-gray-300">Nueva Contraseña</label>
+                                    <input type="password" id="new-password" value={newPassword}
+                                           onChange={e => setNewPassword(e.target.value)}
+                                           className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                                           required/>
+                                </div>
+                                 <div>
+                                    <label htmlFor="confirm-password"
+                                           className="block text-sm font-medium text-gray-300">Confirmar Nueva Contraseña</label>
+                                    <input type="password" id="confirm-password" value={confirmPassword}
+                                           onChange={e => setConfirmPassword(e.target.value)}
+                                           className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                                           required/>
+                                </div>
+                                <button type="submit" disabled={isPasswordLoading}
+                                        className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition duration-300 disabled:opacity-50 flex items-center justify-center">
+                                    {isPasswordLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Actualizar Contraseña'}
+                                </button>
+                            </form>
+                        </div>
+                    )}
+                </div>
+
+               
             </div>
         </div>
     );

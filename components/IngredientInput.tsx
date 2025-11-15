@@ -59,43 +59,35 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister }) => {
         e.preventDefault();
         setError(null);
         setSuccessMessage(null);
-
-        if (mode === 'login' && (!email || !password)) {
-            setError("Por favor, introduce tu email y contraseña.");
-            return;
-        }
-        
         setIsLoading(true);
 
-        if (mode === 'register') {
+        if (mode === 'login') {
+            if (!email || !password) {
+                setError("Por favor, introduce tu email y contraseña.");
+                setIsLoading(false);
+                return;
+            }
+             try {
+                await onLogin(email, password);
+            } catch (err: any) {
+                setError(err.message || "Error al iniciar sesión.");
+            }
+        } else if (mode === 'register') {
             if (validateRegistration()) {
                 const result = await onRegister(email, password, name, country, city, phoneNumber);
                 if (result.success) {
                     setSuccessMessage(result.message);
-                    setMode('login');
-                    setEmail('');
-                    setPassword('');
-                    setName('');
-                    setCountry('');
-                    setCity('');
-                    setPhoneNumber('');
+                    clearStateAndSetMode('login');
                 } else {
                     setError(result.message);
                 }
             }
-        } else { // Login mode
-            try {
-                await onLogin(email, password);
-                // Navigation happens in App.tsx
-            } catch (err: any) {
-                setError(err.message || "Error al iniciar sesión.");
-            }
         }
         setIsLoading(false);
     };
-    
-    const toggleMode = () => {
-        setMode(prevMode => prevMode === 'login' ? 'register' : 'login');
+
+    const clearStateAndSetMode = (newMode: 'login' | 'register') => {
+        setMode(newMode);
         setError(null);
         setSuccessMessage(null);
         setEmail('');
@@ -106,72 +98,90 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister }) => {
         setPhoneNumber('');
     };
 
+    const renderFormContent = () => {
+        return (
+            <>
+                <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-300">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        placeholder="tu@email.com"
+                        autoComplete="email"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-300">Contraseña</label>
+                    <input
+                        type="password"
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                        placeholder="********"
+                        autoComplete={mode === 'login' ? "current-password" : "new-password"}
+                    />
+                </div>
+                {mode === 'register' && (
+                    <>
+                        <div>
+                            <label htmlFor="name" className="block text-sm font-medium text-gray-300">Nombre Completo</label>
+                            <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: Jon Nieve" />
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="flex-1">
+                                <label htmlFor="country" className="block text-sm font-medium text-gray-300">País</label>
+                                <input type="text" id="country" value={country} onChange={(e) => setCountry(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: Westeros" />
+                            </div>
+                            <div className="flex-1">
+                                <label htmlFor="city" className="block text-sm font-medium text-gray-300">Ciudad</label>
+                                <input type="text" id="city" value={city} onChange={(e) => setCity(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: Invernalia" />
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-300">Número Celular</label>
+                            <input type="tel" id="phoneNumber" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: 5551234567" />
+                        </div>
+                    </>
+                )}
+            </>
+        );
+    };
+
+    const getTitle = () => {
+        return mode === 'login' ? 'Acceder' : 'Registrarse';
+    }
+    
+    const getButtonText = () => {
+         if (isLoading) return <i className="fa-solid fa-spinner fa-spin"></i>;
+         return mode === 'login' ? 'Entrar' : 'Registrarse';
+    }
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
             <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-700">
                 <h2 className="text-3xl font-bold text-white text-center mb-6 font-cinzel">
-                    {mode === 'login' ? 'Acceder' : 'Registrarse'}
+                    {getTitle()}
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {error && <p className="text-red-400 bg-red-900/50 p-3 rounded-md text-sm text-center">{error}</p>}
                     {successMessage && <p className="text-green-400 bg-green-900/50 p-3 rounded-md text-sm text-center">{successMessage}</p>}
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-300">Email</label>
-                        <input
-                            type="email"
-                            id="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
-                            placeholder="tu@email.com"
-                            autoComplete="email"
-                        />
-                    </div>
-                    <div>
-                         <label htmlFor="password" className="block text-sm font-medium text-gray-300">Contraseña</label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
-                            placeholder="********"
-                            autoComplete="current-password"
-                        />
-                    </div>
-                    {mode === 'register' && (
-                        <>
-                            <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-300">Nombre Completo</label>
-                                <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: Jon Nieve" />
-                            </div>
-                            <div className="flex gap-4">
-                                <div className="flex-1">
-                                    <label htmlFor="country" className="block text-sm font-medium text-gray-300">País</label>
-                                    <input type="text" id="country" value={country} onChange={(e) => setCountry(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: Westeros" />
-                                </div>
-                                <div className="flex-1">
-                                    <label htmlFor="city" className="block text-sm font-medium text-gray-300">Ciudad</label>
-                                    <input type="text" id="city" value={city} onChange={(e) => setCity(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: Invernalia" />
-                                </div>
-                            </div>
-                            <div>
-                                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-300">Número Celular</label>
-                                <input type="tel" id="phoneNumber" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)}  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="Ej: 5551234567" />
-                            </div>
-                        </>
-                    )}
-                    {mode === 'login' && <p className="text-xs text-gray-400 text-center">Si no tienes una cuenta, se creará una al registrarte.</p>}
+                    
+                    {renderFormContent()}
+                    
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full mt-2 bg-red-600 text-white font-bold py-3 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-gray-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        className="w-full pt-3 pb-3 mt-2 bg-red-600 text-white font-bold px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-gray-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     >
-                        {isLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : (mode === 'login' ? 'Entrar' : 'Registrarse')}
+                        {getButtonText()}
                     </button>
                 </form>
                 <div className="mt-6 text-center">
-                    <button onClick={toggleMode} className="text-sm text-red-400 hover:text-red-300 transition-colors">
+                    <button onClick={() => clearStateAndSetMode(mode === 'login' ? 'register' : 'login')} className="text-sm text-red-400 hover:text-red-300 transition-colors">
                         {mode === 'login' ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes una cuenta? Inicia sesión'}
                     </button>
                 </div>

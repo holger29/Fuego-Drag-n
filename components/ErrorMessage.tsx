@@ -51,11 +51,6 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ series, user, onPurchaseEpiso
         return { isLocked, watchPrice, downloadPrice };
     };
 
-    // FIX: Group episodes by season. By explicitly typing the accumulator with a generic
-    // on `reduce`, we ensure `episodesBySeason` has the correct type. This
-    // prevents TypeScript from inferring `episodes` as `unknown` in the `.map` call below.
-    // @google-genai-fix: Correctly type the `reduce` accumulator by applying a type assertion to the initial value. This fixes the "Untyped function call" error.
-    // FIX: Explicitly type the accumulator in the callback to ensure correct type inference for `episodesBySeason`, preventing the 'map' does not exist on 'unknown' error.
     const episodesBySeason = series.episodes.reduce((acc: Record<string, Episode[]>, episode) => {
         const seasonKey = String(episode.season);
         if (!acc[seasonKey]) {
@@ -80,7 +75,6 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ series, user, onPurchaseEpiso
                                     <h4 className="font-bold text-lg">{ep.title}</h4>
                                     <p className="text-sm text-gray-400">Temporada {ep.season}</p>
                                 </div>
-                                {/* @google-genai-fix: Correct Tailwind CSS class from sm-gap-3 to sm:gap-3 */}
                                 <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                                     {isLocked ? (
                                         <span className="text-xs font-bold bg-yellow-500 text-black py-1 px-2 rounded">${watchPrice.toFixed(2)}</span>
@@ -106,7 +100,9 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ series, user, onPurchaseEpiso
         <div>
             <h3 className="text-3xl font-semibold mb-4 border-b-2 border-gray-700 pb-2 font-cinzel">Episodios por Temporada</h3>
             <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-2">
-                {Object.entries(episodesBySeason).map(([season, episodes]) => {
+                {/* FIX: Use Object.keys to iterate over seasons, which provides better type inference than Object.entries and avoids the 'unknown' type error. */}
+                {Object.keys(episodesBySeason).map((season) => {
+                    const episodes = episodesBySeason[season];
                     const seasonNumber = parseInt(season);
                     const isOpen = openSeason === seasonNumber;
 
@@ -129,7 +125,6 @@ const EpisodeList: React.FC<EpisodeListProps> = ({ series, user, onPurchaseEpiso
                                                     <h4 className="font-bold text-lg">E{ep.episode}: {ep.title}</h4>
                                                     <p className="text-sm text-gray-400">{ep.description}</p>
                                                 </div>
-                                                {/* @google-genai-fix: Correct Tailwind CSS class from sm-gap-3 to sm:gap-3 */}
                                                 <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                                                     {isLocked ? (
                                                         <span className="text-xs font-bold bg-yellow-500 text-black py-1 px-2 rounded">${watchPrice.toFixed(2)}</span>

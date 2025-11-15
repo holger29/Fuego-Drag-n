@@ -1,4 +1,5 @@
 export interface User {
+    docId?: string; // Firestore document ID
     id: string;
     email: string;
     passwordHash: string;
@@ -27,4 +28,13 @@ export interface Series {
     description: string;
     posterUrl: string;
     episodes: Episode[];
+}
+
+export interface Feedback {
+    id: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    comment: string;
+    timestamp: any; // Allow for Firestore Timestamp object
 }

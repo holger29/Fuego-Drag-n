@@ -10,8 +10,12 @@ import PaymentModal from './components/PaymentModal';
 import PlayerPage from './components/PlayerPage';
 import ProfilePage from './components/ProfilePage';
 import BetaWarningModal from './components/BetaWarningModal';
+import AdminLoginPage from './components/AdminLoginPage';
+import AdminPage from './components/AdminPage';
+import { db } from './services/firebase';
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, Timestamp, setDoc } from 'firebase/firestore';
 
-type View = 'landing' | 'login' | 'home' | 'series' | 'player' | 'profile';
+type View = 'landing' | 'login' | 'home' | 'series' | 'player' | 'profile' | 'adminLogin' | 'admin';
 
 const App: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -25,49 +29,38 @@ const App: React.FC = () => {
         onSuccess: () => void;
     } | null>(null);
     const [showBetaWarning, setShowBetaWarning] = useState(false);
-    
-    // Helper function to hash passwords using the browser's built-in crypto API
+    const [isAdmin, setIsAdmin] = useState(false);
+
     const hashPassword = async (password: string): Promise<string> => {
         const encoder = new TextEncoder();
         const data = encoder.encode(password);
         const hashBuffer = await crypto.subtle.digest('SHA-256', data);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        return hashHex;
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     };
 
     useEffect(() => {
-        // Beta warning logic
         if (!sessionStorage.getItem('betaWarningDismissed')) {
             setShowBetaWarning(true);
         }
 
-        const loggedInUserEmail = localStorage.getItem('dragon_fire_session');
-        if (loggedInUserEmail) {
-            const usersStr = localStorage.getItem('dragon_fire_users');
-            const users = usersStr ? JSON.parse(usersStr) : {};
-            let currentUser = users[loggedInUserEmail];
-
-            if (currentUser) {
-                // Data migration for existing users
-                if (currentUser.watchedGoTEpisodes !== undefined && !currentUser.watchedEpisodes) {
-                    const watchedIds = Array.from({ length: currentUser.watchedGoTEpisodes }, (_, i) => i + 1);
-                    currentUser.watchedEpisodes = watchedIds;
-                    delete currentUser.watchedGoTEpisodes;
+        const checkSession = async () => {
+            const loggedInUserEmail = localStorage.getItem('dragon_fire_session');
+            if (loggedInUserEmail) {
+                const q = query(collection(db, "users"), where("email", "==", loggedInUserEmail));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const userDoc = querySnapshot.docs[0];
+                    const currentUser = { docId: userDoc.id, ...userDoc.data() } as User;
+                    setUser(currentUser);
+                    setView('home');
+                } else {
+                    handleLogout(); // Clean up if user is not in DB
                 }
-                 if (!currentUser.purchasedEpisodes) currentUser.purchasedEpisodes = [];
-                 if (!currentUser.watchedEpisodes) currentUser.watchedEpisodes = [];
-                 if (!currentUser.name) currentUser.name = '';
-                 if (!currentUser.country) currentUser.country = '';
-                 if (!currentUser.city) currentUser.city = '';
-                 if (!currentUser.phoneNumber) currentUser.phoneNumber = '';
-
-
-                setUser(currentUser);
-                setView('home');
-                updateUserInStorage(currentUser); // Save migrated user data
             }
-        }
+        };
+
+        checkSession();
 
         const fetchSeriesData = async () => {
             const data = await getSeries();
@@ -77,16 +70,18 @@ const App: React.FC = () => {
     }, []);
 
     const handleRegister = async (email: string, password: string, name: string, country: string, city: string, phoneNumber: string): Promise<{ success: boolean; message: string }> => {
-        const usersStr = localStorage.getItem('dragon_fire_users');
-        const users = usersStr ? JSON.parse(usersStr) : {};
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", email));
+        const querySnapshot = await getDocs(q);
 
-        if (users[email]) {
+        if (!querySnapshot.empty) {
             return { success: false, message: 'El correo electrónico ya está registrado.' };
         }
 
         const passwordHash = await hashPassword(password);
-        const newUser: User = {
-            id: Date.now().toString(),
+        const userId = Date.now().toString();
+        const newUser: Omit<User, 'docId'> = {
+            id: userId,
             email: email,
             passwordHash: passwordHash,
             name,
@@ -97,24 +92,27 @@ const App: React.FC = () => {
             unlockedHoD: false,
             purchasedEpisodes: [],
         };
-        users[email] = newUser;
-        localStorage.setItem('dragon_fire_users', JSON.stringify(users));
+        
+        await setDoc(doc(db, "users", userId), newUser);
 
         return { success: true, message: '¡Registro exitoso! Ahora puedes iniciar sesión.' };
     };
 
-
     const handleLogin = async (email: string, password: string) => {
-        const usersStr = localStorage.getItem('dragon_fire_users');
-        const users = usersStr ? JSON.parse(usersStr) : {};
-        
-        let currentUser = users[email];
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", email));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            throw new Error("Credenciales incorrectas. Por favor, inténtalo de nuevo.");
+        }
+
+        const userDoc = querySnapshot.docs[0];
+        const currentUser = { docId: userDoc.id, ...userDoc.data() } as User;
         const passwordHash = await hashPassword(password);
 
-        if (currentUser && currentUser.passwordHash === passwordHash) {
+        if (currentUser.passwordHash === passwordHash) {
             localStorage.setItem('dragon_fire_session', email);
-            if (!currentUser.purchasedEpisodes) currentUser.purchasedEpisodes = [];
-            if (!currentUser.watchedEpisodes) currentUser.watchedEpisodes = [];
             setUser(currentUser);
             setView('home');
         } else {
@@ -125,23 +123,25 @@ const App: React.FC = () => {
     const handleLogout = () => {
         localStorage.removeItem('dragon_fire_session');
         setUser(null);
+        setIsAdmin(false);
         setView('landing');
         setPlayingEpisode(null);
         setSelectedSeriesId(null);
     };
-    
-    const handleUpdateProfile = async (updatedDetails: Pick<User, 'name' | 'country' | 'city' | 'phoneNumber'>): Promise<{ success: boolean, message: string }> => {
-        if (!user) return { success: false, message: "No hay usuario activo." };
 
+    const handleUpdateProfile = async (updatedDetails: Pick<User, 'name' | 'country' | 'city' | 'phoneNumber'>): Promise<{ success: boolean, message: string }> => {
+        if (!user || !user.docId) return { success: false, message: "No hay usuario activo." };
+        
+        const userRef = doc(db, "users", user.docId);
+        await updateDoc(userRef, updatedDetails);
         const updatedUser = { ...user, ...updatedDetails };
         setUser(updatedUser);
-        updateUserInStorage(updatedUser);
 
         return { success: true, message: "Perfil actualizado con éxito." };
     };
 
     const handleChangePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean, message: string }> => {
-        if (!user) return { success: false, message: "No hay usuario activo." };
+        if (!user || !user.docId) return { success: false, message: "No hay usuario activo." };
 
         const currentPasswordHash = await hashPassword(currentPassword);
         if (currentPasswordHash !== user.passwordHash) {
@@ -149,11 +149,40 @@ const App: React.FC = () => {
         }
         
         const newPasswordHash = await hashPassword(newPassword);
+        const userRef = doc(db, "users", user.docId);
+        await updateDoc(userRef, { passwordHash: newPasswordHash });
+        
         const updatedUser = { ...user, passwordHash: newPasswordHash };
         setUser(updatedUser);
-        updateUserInStorage(updatedUser);
 
         return { success: true, message: "Contraseña actualizada con éxito." };
+    };
+    
+    const handleSaveFeedback = async (comment: string): Promise<{ success: boolean, message: string }> => {
+        if (!user) return { success: false, message: "Debes iniciar sesión para enviar comentarios." };
+    
+        try {
+            await addDoc(collection(db, "feedback"), {
+                userId: user.id,
+                userName: user.name,
+                userEmail: user.email,
+                comment,
+                timestamp: Timestamp.fromDate(new Date()),
+            });
+            return { success: true, message: "¡Gracias por tu comentario! Tus datos serán estudiados para mejorar la calidad de nuestro sistema." };
+        } catch (error) {
+            console.error("Error writing document: ", error);
+            return { success: false, message: "No se pudo enviar tu comentario. Inténtalo de nuevo." };
+        }
+    };
+
+    const handleAdminLogin = async (email: string, pass: string): Promise<void> => {
+        if (email === "holgereduardo777@gmail.com" && pass === "HHolger19") {
+             setIsAdmin(true);
+             setView('admin');
+        } else {
+            throw new Error("Credenciales de administrador incorrectas.");
+        }
     };
     
     const handleSelectSeries = (seriesId: string) => {
@@ -161,11 +190,12 @@ const App: React.FC = () => {
         setView('series');
     };
 
-    const updateUserInStorage = (updatedUser: User) => {
-        const usersStr = localStorage.getItem('dragon_fire_users');
-        const users = usersStr ? JSON.parse(usersStr) : {};
-        users[updatedUser.email] = updatedUser;
-        localStorage.setItem('dragon_fire_users', JSON.stringify(users));
+    const updateUserInDb = async (updatedUser: User) => {
+        if (!updatedUser.docId) return;
+        const userRef = doc(db, "users", updatedUser.docId);
+        // Avoid writing docId into the document itself
+        const { docId, ...userData } = updatedUser;
+        await updateDoc(userRef, userData);
     };
 
     const handleUnlockHoD = () => {
@@ -173,7 +203,7 @@ const App: React.FC = () => {
             if (user) {
                 const updatedUser = { ...user, unlockedHoD: true };
                 setUser(updatedUser);
-                updateUserInStorage(updatedUser);
+                updateUserInDb(updatedUser);
                 alert("'La Casa del Dragón' ha sido desbloqueada.");
                 setPaymentDetails(null);
             }
@@ -197,7 +227,7 @@ const App: React.FC = () => {
                 purchasedEpisodes: [...(user.purchasedEpisodes || []), episode.id],
             };
             setUser(updatedUser);
-            updateUserInStorage(updatedUser);
+            updateUserInDb(updatedUser);
             alert(`Episodio "${episode.title}" comprado exitosamente.`);
             setPaymentDetails(null);
         };
@@ -240,7 +270,7 @@ const App: React.FC = () => {
                 watchedEpisodes: [...user.watchedEpisodes, episodeId],
             };
             setUser(updatedUser);
-            updateUserInStorage(updatedUser);
+            updateUserInDb(updatedUser);
         }
     };
 
@@ -253,9 +283,13 @@ const App: React.FC = () => {
     const renderContent = () => {
         switch (view) {
             case 'landing':
-                return <LandingPage onLoginClick={() => setView('login')} />;
+                return <LandingPage onLoginClick={() => setView('login')} onAdminClick={() => setView('adminLogin')} />;
             case 'login':
                 return <LoginPage onLogin={handleLogin} onRegister={handleRegister} />;
+            case 'adminLogin':
+                return <AdminLoginPage onAdminLogin={handleAdminLogin} onBackToLanding={() => setView('landing')} />;
+            case 'admin':
+                return isAdmin ? <AdminPage onLogout={handleLogout} /> : <LandingPage onLoginClick={() => setView('login')} onAdminClick={() => setView('adminLogin')} />;
             case 'home':
                 if (user) {
                     return <HomePage series={seriesList} user={user} onSelectSeries={handleSelectSeries} onUnlockHoD={handleUnlockHoD} />;
@@ -291,11 +325,12 @@ const App: React.FC = () => {
                         onBack={() => setView('home')}
                         onChangePassword={handleChangePassword}
                         onUpdateProfile={handleUpdateProfile}
+                        onSaveFeedback={handleSaveFeedback}
                         />
                  }
                  return null;
             default:
-                return <LandingPage onLoginClick={() => setView('login')} />;
+                return <LandingPage onLoginClick={() => setView('login')} onAdminClick={() => setView('adminLogin')} />;
         }
     };
 
