@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 interface LoginPageProps {
     onLogin: (email: string, password: string) => Promise<void>;
     onRegister: (email: string, password: string, name: string, country: string, city: string, phoneNumber: string) => Promise<{ success: boolean, message: string }>;
+    onBackToLanding: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, onBackToLanding }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
@@ -183,6 +184,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister }) => {
                 <div className="mt-6 text-center">
                     <button onClick={() => clearStateAndSetMode(mode === 'login' ? 'register' : 'login')} className="text-sm text-red-400 hover:text-red-300 transition-colors">
                         {mode === 'login' ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes una cuenta? Inicia sesión'}
+                    </button>
+                </div>
+                 <div className="mt-4 text-center">
+                    <button onClick={onBackToLanding} className="text-sm text-gray-400 hover:text-gray-200 transition-colors">
+                        <i className="fa-solid fa-arrow-left mr-2"></i>
+                        Regresar
                     </button>
                 </div>
             </div>

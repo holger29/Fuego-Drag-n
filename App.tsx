@@ -285,7 +285,7 @@ const App: React.FC = () => {
             case 'landing':
                 return <LandingPage onLoginClick={() => setView('login')} onAdminClick={() => setView('adminLogin')} />;
             case 'login':
-                return <LoginPage onLogin={handleLogin} onRegister={handleRegister} />;
+                return <LoginPage onLogin={handleLogin} onRegister={handleRegister} onBackToLanding={() => setView('landing')} />;
             case 'adminLogin':
                 return <AdminLoginPage onAdminLogin={handleAdminLogin} onBackToLanding={() => setView('landing')} />;
             case 'admin':
