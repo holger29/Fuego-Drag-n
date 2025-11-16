@@ -116,7 +116,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, onBackToLand
                 <div className="p-6">
                     <h3 className="text-xl font-bold text-white text-center mb-4 font-cinzel">Restablecer Contraseña</h3>
                     <p className="text-gray-300 text-center mb-6">
-                        Al hacer clic en el siguiente botón automaticamente enviarás un correo electrónico al equipo de soporte Fuego Dragón solicitando el restablecimiento de tu contraseña.
+                        Al hacer click en el siguiente boton serás redirigido a tu correo electronico para que envies un E-mail solicitando el restablecimiento de tu contraseña
                     </p>
                     <div className="flex justify-center gap-4">
                         <button
