@@ -34,7 +34,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ amount, itemName, onSuccess
                             <input
                                 type="text"
                                 id="card-number"
-                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500"
                                 placeholder="4242 4242 4242 4242"
                                 disabled={isProcessing}
                                 required
@@ -43,11 +43,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ amount, itemName, onSuccess
                         <div className="flex gap-4">
                             <div className="flex-1">
                                 <label htmlFor="expiry" className="block text-sm font-medium text-gray-300">Expiración</label>
-                                <input type="text" id="expiry" className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="MM/YY" disabled={isProcessing} required />
+                                <input type="text" id="expiry" className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500" placeholder="MM/YY" disabled={isProcessing} required />
                             </div>
                             <div className="flex-1">
                                 <label htmlFor="cvc" className="block text-sm font-medium text-gray-300">CVC</label>
-                                <input type="text" id="cvc" className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" placeholder="123" disabled={isProcessing} required />
+                                <input type="text" id="cvc" className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500" placeholder="123" disabled={isProcessing} required />
                             </div>
                         </div>
                     </div>
@@ -65,7 +65,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ amount, itemName, onSuccess
                             <button
                                 type="submit"
                                 disabled={isProcessing}
-                                className="bg-red-600 text-white font-bold py-2 px-6 rounded hover:bg-red-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
+                                className="bg-green-600 text-white font-bold py-2 px-6 rounded hover:bg-green-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
                             >
                                 {isProcessing ? (
                                     <i className="fa-solid fa-spinner fa-spin"></i>

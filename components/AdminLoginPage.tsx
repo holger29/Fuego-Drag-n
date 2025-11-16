@@ -44,7 +44,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onAdminLogin, onBackToL
                             id="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500"
                             placeholder="admin@email.com"
                             autoComplete="email"
                         />
@@ -56,7 +56,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onAdminLogin, onBackToL
                             id="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500"
                             placeholder="********"
                             autoComplete="current-password"
                         />
@@ -64,7 +64,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onAdminLogin, onBackToL
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full mt-2 bg-red-600 text-white font-bold py-3 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-gray-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        className="w-full mt-2 bg-green-600 text-white font-bold py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     >
                         {isLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Entrar'}
                     </button>

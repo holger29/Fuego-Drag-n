@@ -174,25 +174,25 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, seriesList, onBack, onC
                     <form onSubmit={handleProfileUpdateSubmit} className="space-y-4">
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-gray-300">Nombre Completo</label>
-                            <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" required />
+                            <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500" required />
                         </div>
                          <div className="flex gap-4">
                              <div className="flex-1">
                                 <label htmlFor="country" className="block text-sm font-medium text-gray-300">País</label>
-                                <input type="text" id="country" value={country} onChange={e => setCountry(e.target.value)} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" required />
+                                <input type="text" id="country" value={country} onChange={e => setCountry(e.target.value)} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500" required />
                              </div>
                              <div className="flex-1">
                                 <label htmlFor="city" className="block text-sm font-medium text-gray-300">Ciudad</label>
-                                <input type="text" id="city" value={city} onChange={e => setCity(e.target.value)} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" required />
+                                <input type="text" id="city" value={city} onChange={e => setCity(e.target.value)} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500" required />
                              </div>
                         </div>
                         <div>
                             <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-300">Número Celular</label>
-                            <input type="tel" id="phoneNumber" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500" required />
+                            <input type="tel" id="phoneNumber" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500" required />
                         </div>
                         <div className="flex justify-end gap-3 pt-2">
                             <button type="button" onClick={handleCancelEdit} disabled={isProfileLoading} className="bg-gray-600 text-white font-bold py-2 px-4 rounded hover:bg-gray-500 transition duration-300 disabled:opacity-50">Cancelar</button>
-                            <button type="submit" disabled={isProfileLoading} className="bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition duration-300 disabled:opacity-50 flex items-center justify-center min-w-[150px]">
+                            <button type="submit" disabled={isProfileLoading} className="bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition duration-300 disabled:opacity-50 flex items-center justify-center min-w-[150px]">
                                 {isProfileLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Guardar Cambios'}
                             </button>
                         </div>
@@ -269,12 +269,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, seriesList, onBack, onC
                                         value={feedback}
                                         onChange={(e) => setFeedback(e.target.value)}
                                         rows={5}
-                                        className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                                        className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500"
                                         placeholder="Escribe aquí tus comentarios sobre la página, los videos, qué te gustaría que mejoráramos, etc."
                                     />
                                 </div>
                                 <div className="text-right">
-                                    <button type="submit" disabled={isFeedbackLoading} className="bg-red-600 text-white font-bold py-2 px-6 rounded-md hover:bg-red-700 transition duration-300 disabled:opacity-50 flex items-center justify-center min-w-[150px] ml-auto">
+                                    <button type="submit" disabled={isFeedbackLoading} className="bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition duration-300 disabled:opacity-50 flex items-center justify-center min-w-[150px] ml-auto">
                                         {isFeedbackLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Enviar Comentario'}
                                     </button>
                                 </div>
@@ -303,7 +303,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, seriesList, onBack, onC
                                            className="block text-sm font-medium text-gray-300">Contraseña Actual</label>
                                     <input type="password" id="current-password" value={currentPassword}
                                            onChange={e => setCurrentPassword(e.target.value)}
-                                           className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                                           className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500"
                                            required/>
                                 </div>
                                  <div>
@@ -311,7 +311,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, seriesList, onBack, onC
                                            className="block text-sm font-medium text-gray-300">Nueva Contraseña</label>
                                     <input type="password" id="new-password" value={newPassword}
                                            onChange={e => setNewPassword(e.target.value)}
-                                           className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                                           className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500"
                                            required/>
                                 </div>
                                  <div>
@@ -319,11 +319,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, seriesList, onBack, onC
                                            className="block text-sm font-medium text-gray-300">Confirmar Nueva Contraseña</label>
                                     <input type="password" id="confirm-password" value={confirmPassword}
                                            onChange={e => setConfirmPassword(e.target.value)}
-                                           className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-red-500 focus:border-red-500"
+                                           className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-green-500 focus:border-green-500"
                                            required/>
                                 </div>
                                 <button type="submit" disabled={isPasswordLoading}
-                                        className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition duration-300 disabled:opacity-50 flex items-center justify-center">
+                                        className="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition duration-300 disabled:opacity-50 flex items-center justify-center">
                                     {isPasswordLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Actualizar Contraseña'}
                                 </button>
                             </form>
