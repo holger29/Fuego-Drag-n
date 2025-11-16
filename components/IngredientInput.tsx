@@ -18,6 +18,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, onBackToLand
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = useState(false);
+    const [isResettingPassword, setIsResettingPassword] = useState(false);
 
     const validateRegistration = () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -101,13 +102,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, onBackToLand
     };
 
     const handleForgotPassword = () => {
+        setIsResettingPassword(true);
+
         const emailTo = "holgereduardo777@outlook.com";
         const subject = "Solicitud Restablecimiento Contraseña.";
         const body = "Cordial saludos equipo de Fuego Dragón, el presente correo es para solicitar el restablecimiento de mi contraseña la cual perdí o no la recuerdo. Agradezco su atención prestada, quedo atento.";
         window.location.href = `mailto:${emailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         
-        setIsForgotPasswordModalOpen(false);
-        setSuccessMessage("Tu solicitud de restablecimiento de contraseña ha sido enviada satisfactoriamente. En las próximas horas recibirás un correo electrónico con tu nueva contraseña.");
+        setTimeout(() => {
+            setIsResettingPassword(false);
+            setIsForgotPasswordModalOpen(false);
+            setSuccessMessage("Tu solicitud de restablecimiento de contraseña ha sido enviada satisfactoriamente. En las próximas horas recibirás un correo electrónico con tu nueva contraseña.");
+        }, 9000);
     };
 
     const ForgotPasswordModal = () => (
@@ -116,22 +122,31 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onRegister, onBackToLand
                 <div className="p-6">
                     <h3 className="text-xl font-bold text-white text-center mb-4 font-cinzel">Restablecer Contraseña</h3>
                     <p className="text-gray-300 text-center mb-6">
-                        Al hacer click en el siguiente boton serás redirigido a tu correo electronico para que envies un E-mail solicitando el restablecimiento de tu contraseña
+                        {isResettingPassword
+                            ? "Estamos abriendo tu cliente de correo. Por favor, envía el email y vuelve a esta ventana para ver la confirmación."
+                            : "Al hacer click en el siguiente boton serás redirigido a tu correo electronico para que envies un E-mail solicitando el restablecimiento de tu contraseña."}
                     </p>
                     <div className="flex justify-center gap-4">
                         <button
                             type="button"
                             onClick={() => setIsForgotPasswordModalOpen(false)}
-                            className="bg-gray-600 text-white font-bold py-2 px-4 rounded hover:bg-gray-500 transition duration-300"
+                            disabled={isResettingPassword}
+                            className="bg-gray-600 text-white font-bold py-2 px-4 rounded hover:bg-gray-500 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Cancelar
                         </button>
                         <button
                             type="button"
                             onClick={handleForgotPassword}
-                            className="bg-green-600 text-white font-bold py-2 px-6 rounded hover:bg-green-700 transition duration-300"
+                            disabled={isResettingPassword}
+                            className="bg-green-600 text-white font-bold py-2 px-6 rounded hover:bg-green-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[210px]"
                         >
-                            Restablecer Contraseña
+                            {isResettingPassword ? (
+                                <>
+                                    <i className="fa-solid fa-spinner fa-spin mr-2"></i>
+                                    Procesando...
+                                </>
+                            ) : 'Restablecer Contraseña'}
                         </button>
                     </div>
                 </div>
