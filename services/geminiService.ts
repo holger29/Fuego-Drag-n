@@ -3,8 +3,10 @@ import type { Series, Episode } from '../types';
 
 // This service provides mock data for the series, now enhanced with Gemini.
 
-// API Key is now securely loaded from environment variables.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Initialize Gemini with API Key from process.env.
+// We provide a fallback string to ensure the client initializes without crashing if the key is missing,
+// allowing the app to gracefully degrade to mock data in getSeriesById.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "fallback_key_for_init" });
 
 
 const generateGoTEpisodes = () => {
@@ -78,6 +80,12 @@ export const getSeriesById = async (id: string): Promise<Series | undefined> => 
         return seriesCache.get(id);
     }
 
+    // Si no hay API Key válida, devolvemos los datos mockeados sin intentar llamar a Gemini
+    if (!process.env.API_KEY) {
+        console.warn("Gemini API Key no configurada o inválida. Usando datos estáticos.");
+        return seriesStructure;
+    }
+
     try {
         const descriptionPrompt = `Generate a compelling, one-sentence description in Spanish for the TV series '${seriesStructure.title}'. It should be exciting and hook the reader.`;
         const episodePrompt = `Generate brief, one-sentence summaries in Spanish for each episode of the TV series "${seriesStructure.title}".
@@ -111,7 +119,9 @@ export const getSeriesById = async (id: string): Promise<Series | undefined> => 
 
         let generatedSummaries: {id: number, description: string}[] = [];
         try {
-           generatedSummaries = JSON.parse(episodesResponse.text);
+           if (episodesResponse.text) {
+               generatedSummaries = JSON.parse(episodesResponse.text);
+           }
         } catch(e) {
             console.error("Failed to parse JSON from Gemini response:", episodesResponse.text);
             throw e; 
